@@ -12,6 +12,9 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/gif",
 ]);
 
+type PersonActionResult = { error: string } | void;
+type UploadPersonImageResult = { error: string } | { imageUrl: string };
+
 function getImagePathFromUrl(imageUrl: string | null) {
   if (!imageUrl) return null;
 
@@ -36,7 +39,7 @@ async function uploadPersonImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   personId: string,
   file: File,
-) {
+): Promise<UploadPersonImageResult> {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     return { error: "Picture must be a JPG, PNG, WebP, or GIF." };
   }
@@ -92,7 +95,9 @@ function getCleanedPersonFields(formData: FormData) {
   return cleaned;
 }
 
-export async function createPerson(formData: FormData) {
+export async function createPerson(
+  formData: FormData,
+): Promise<PersonActionResult> {
   const supabase = await createClient();
   const cleaned = getCleanedPersonFields(formData);
   const imageFile = formData.get("image_file");
@@ -117,7 +122,10 @@ export async function createPerson(formData: FormData) {
   redirect("/people");
 }
 
-export async function updatePerson(id: string, formData: FormData) {
+export async function updatePerson(
+  id: string,
+  formData: FormData,
+): Promise<PersonActionResult> {
   const supabase = await createClient();
   const cleaned = getCleanedPersonFields(formData);
   const imageFile = formData.get("image_file");
@@ -151,7 +159,7 @@ export async function updatePerson(id: string, formData: FormData) {
   redirect(`/people/${id}`);
 }
 
-export async function deletePerson(id: string) {
+export async function deletePerson(id: string): Promise<PersonActionResult> {
   const supabase = await createClient();
 
   const { error } = await supabase.from("people").delete().eq("id", id);
