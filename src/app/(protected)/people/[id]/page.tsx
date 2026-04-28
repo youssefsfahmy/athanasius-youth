@@ -112,16 +112,29 @@ export default async function PersonProfilePage({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <a
-            href="/people"
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            ← Back to People
-          </a>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">
-            {p.full_name}
-          </h1>
+        <div className="flex items-center gap-4">
+          {p.image_url ? (
+            <img
+              src={p.image_url}
+              alt={p.full_name}
+              className="h-20 w-20 rounded-xl object-cover border border-gray-200 bg-gray-50"
+            />
+          ) : (
+            <div className="h-20 w-20 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center text-2xl font-semibold text-gray-400">
+              {p.full_name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <a
+              href="/people"
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              ← Back to People
+            </a>
+            <h1 className="text-2xl font-bold text-gray-900 mt-1">
+              {p.full_name}
+            </h1>
+          </div>
         </div>
         <PersonActions personId={id} />
       </div>

@@ -1,6 +1,9 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import type { Person } from "@/lib/types";
+import Link from "next/link";
 import { useState } from "react";
 
 type ServantOption = { id: string; full_name: string };
@@ -91,6 +94,7 @@ export default function PersonForm({
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(person?.image_url ?? "");
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -112,6 +116,78 @@ export default function PersonForm({
       {error && (
         <p className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</p>
       )}
+
+      <fieldset className="border border-gray-200 rounded-lg p-4">
+        <legend className="text-sm font-semibold text-gray-700 px-2">
+          Picture
+        </legend>
+        <div className="grid grid-cols-1 lg:grid-cols-[160px_minmax(0,1fr)] gap-4 items-start mt-2">
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-36 w-36 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Person preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs text-gray-400 text-center px-3">
+                  No picture selected
+                </span>
+              )}
+            </div>
+          </div>
+          <div>
+            <label
+              htmlFor="image_file"
+              className="block text-sm text-gray-600 mb-1"
+            >
+              Upload Picture
+            </label>
+            <input
+              id="image_file"
+              name="image_file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) {
+                  setImagePreview(person?.image_url ?? "");
+                  return;
+                }
+                setImagePreview(URL.createObjectURL(file));
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <input
+              type="hidden"
+              name="existing_image_url"
+              value={person?.image_url ?? ""}
+            />
+            {person?.image_url && (
+              <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  name="remove_image"
+                  value="true"
+                  onChange={(event) => {
+                    if (event.target.checked) {
+                      setImagePreview("");
+                      return;
+                    }
+                    setImagePreview(person.image_url ?? "");
+                  }}
+                  className="rounded border-gray-300"
+                />
+                Remove current picture
+              </label>
+            )}
+            <p className="mt-2 text-xs text-gray-500">
+              Upload a JPG, PNG, WebP, or GIF up to 5 MB.
+            </p>
+          </div>
+        </div>
+      </fieldset>
 
       {FIELD_GROUPS.map((group) => (
         <fieldset
@@ -192,12 +268,12 @@ export default function PersonForm({
         >
           {loading ? "Saving..." : submitLabel}
         </button>
-        <a
+        <Link
           href="/people"
           className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200"
         >
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   );

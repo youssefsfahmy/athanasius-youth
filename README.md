@@ -62,7 +62,7 @@ This creates all tables, indexes, RLS policies, and triggers.
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:4000](http://localhost:4000).
 
 ### 6. Create your first account
 

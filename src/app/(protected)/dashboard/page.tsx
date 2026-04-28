@@ -88,6 +88,7 @@ export default async function DashboardPage({
     .from("people")
     .select(
       "id, full_name, church_last_checkup_date, church_family_group, church_checkup_servant_id, gender",
+      { count: "exact" },
     )
     .or(
       `church_last_checkup_date.is.null,church_last_checkup_date.lt.${thirtyDaysAgo.toISOString().split("T")[0]}`,
@@ -106,7 +107,7 @@ export default async function DashboardPage({
   if (gender) {
     notCheckedQuery = notCheckedQuery.eq("gender", gender);
   }
-  const { data: notCheckedUp } = await notCheckedQuery;
+  const { data: notCheckedUp, count: notCheckedCount } = await notCheckedQuery;
 
   // Build filter URL helper
   function filterUrl(params: { view?: string; gender?: string }) {
@@ -221,8 +222,8 @@ export default async function DashboardPage({
         />
         <StatCard
           label="Not Checked (30d)"
-          value={notCheckedUp?.length ?? 0}
-          highlight={!!notCheckedUp?.length}
+          value={notCheckedCount ?? 0}
+          highlight={!!notCheckedCount}
         />
       </div>
 
