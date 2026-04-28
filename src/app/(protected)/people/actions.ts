@@ -11,6 +11,8 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/webp",
   "image/gif",
 ]);
+const ARABIC_FULL_NAME_REGEX =
+  /^[\p{Script=Arabic}]+(?:\s+[\p{Script=Arabic}]+)*$/u;
 
 type PersonActionResult = { error: string } | void;
 type UploadPersonImageResult = { error: string } | { imageUrl: string };
@@ -95,13 +97,30 @@ function getCleanedPersonFields(formData: FormData) {
   return cleaned;
 }
 
+function validatePersonFields(cleaned: Record<string, string | null>) {
+  const normalizedFullName =
+    cleaned.full_name?.trim().replace(/\s+/g, " ") || "";
+
+  if (!normalizedFullName || !ARABIC_FULL_NAME_REGEX.test(normalizedFullName)) {
+    return { error: "Full name must contain Arabic letters only." };
+  }
+
+  cleaned.full_name = normalizedFullName;
+  return null;
+}
+
 export async function createPerson(
   formData: FormData,
 ): Promise<PersonActionResult> {
   const supabase = await createClient();
   const cleaned = getCleanedPersonFields(formData);
+  const validationError = validatePersonFields(cleaned);
   const imageFile = formData.get("image_file");
   const personId = crypto.randomUUID();
+
+  if (validationError) {
+    return validationError;
+  }
 
   cleaned.id = personId;
 
@@ -128,6 +147,7 @@ export async function updatePerson(
 ): Promise<PersonActionResult> {
   const supabase = await createClient();
   const cleaned = getCleanedPersonFields(formData);
+  const validationError = validatePersonFields(cleaned);
   const imageFile = formData.get("image_file");
   const existingImageUrl = formData.get("existing_image_url");
   const removeImage = formData.get("remove_image") === "true";
@@ -135,6 +155,10 @@ export async function updatePerson(
     typeof existingImageUrl === "string" && existingImageUrl !== ""
       ? existingImageUrl
       : null;
+
+  if (validationError) {
+    return validationError;
+  }
 
   if (removeImage) {
     cleaned.image_url = null;

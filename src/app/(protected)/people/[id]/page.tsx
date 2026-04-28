@@ -8,6 +8,16 @@ import type {
 } from "@/lib/types";
 import PersonActions from "./person-actions";
 
+function getPhoneHref(phoneNumber: string) {
+  return `tel:${phoneNumber.replace(/[^\d+]/g, "")}`;
+}
+
+type DetailItem = {
+  label: string;
+  value: string | null;
+  isPhone?: boolean;
+};
+
 export default async function PersonProfilePage({
   params,
 }: {
@@ -51,15 +61,15 @@ export default async function PersonProfilePage({
     checkupServantName = servant?.full_name || null;
   }
 
-  const sections = [
+  const sections: { title: string; items: DetailItem[] }[] = [
     {
       title: "Contact",
       items: [
-        { label: "Primary Phone", value: p.phone_primary },
-        { label: "Secondary Phone", value: p.phone_secondary },
-        { label: "Landline", value: p.phone_landline },
-        { label: "Father's Phone", value: p.phone_father },
-        { label: "Mother's Phone", value: p.phone_mother },
+        { label: "Primary Phone", value: p.phone_primary, isPhone: true },
+        { label: "Secondary Phone", value: p.phone_secondary, isPhone: true },
+        { label: "Landline", value: p.phone_landline, isPhone: true },
+        { label: "Father's Phone", value: p.phone_father, isPhone: true },
+        { label: "Mother's Phone", value: p.phone_mother, isPhone: true },
       ],
     },
     {
@@ -159,7 +169,16 @@ export default async function PersonProfilePage({
                     <div key={item.label}>
                       <dt className="text-xs text-gray-500">{item.label}</dt>
                       <dd className="text-sm text-gray-900 mt-0.5">
-                        {item.value}
+                        {item.isPhone && item.value ? (
+                          <a
+                            href={getPhoneHref(item.value)}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {item.value}
+                          </a>
+                        ) : (
+                          item.value
+                        )}
                       </dd>
                     </div>
                   ))}

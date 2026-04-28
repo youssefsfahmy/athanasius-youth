@@ -2,6 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/require-profile";
 import type { Person } from "@/lib/types";
 
+function getPhoneHref(phoneNumber: string) {
+  return `tel:${phoneNumber.replace(/[^\d+]/g, "")}`;
+}
+
 export default async function PeoplePage({
   searchParams,
 }: {
@@ -146,7 +150,16 @@ export default async function PeoplePage({
                   </a>
                 </td>
                 <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
-                  {person.phone_primary || "—"}
+                  {person.phone_primary ? (
+                    <a
+                      href={getPhoneHref(person.phone_primary)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {person.phone_primary}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
                   {person.church_family_group || "—"}

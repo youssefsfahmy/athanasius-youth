@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createCheckup, updatePersonInfo } from "./actions";
+import LoadingOverlay from "@/components/loading-overlay";
 import type { Person } from "@/lib/types";
 
 type ServantOption = { id: string; full_name: string };
@@ -63,11 +64,15 @@ export default function CheckupForm({
   async function handleSubmit(formData: FormData) {
     setError(null);
     setLoading(true);
-    const result = await createCheckup(formData);
-    if (result?.error) {
-      setError(result.error);
+    try {
+      const result = await createCheckup(formData);
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      }
+    } catch {
+      // redirect() throws — keep loading visible during navigation
     }
-    setLoading(false);
   }
 
   async function handleUpdatePerson(formData: FormData) {
@@ -85,116 +90,119 @@ export default function CheckupForm({
 
   return (
     <>
+      {loading && <LoadingOverlay message="Saving checkup..." />}
       <form action={handleSubmit} className="space-y-4">
         {error && (
           <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label
-              htmlFor="person_id"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Person *
-            </label>
-            <select
-              id="person_id"
-              name="person_id"
-              required
-              defaultValue={defaultPersonId || ""}
-              onChange={(e) => {
-                setSelectedPersonId(e.target.value);
-                setShowPersonInfo(false);
-                setPersonUpdateMsg(null);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="">Select person...</option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="checkup_date"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Date *
-            </label>
-            <input
-              id="checkup_date"
-              name="checkup_date"
-              type="date"
-              required
-              defaultValue={new Date().toISOString().split("T")[0]}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="method"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Method *
-            </label>
-            <select
-              id="method"
-              name="method"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="call">Call</option>
-              <option value="WhatsApp">WhatsApp</option>
-              <option value="visit">Visit</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div className="sm:col-span-2">
-            <label
-              htmlFor="comment"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Comment
-            </label>
-            <input
-              id="comment"
-              name="comment"
-              type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-            />
-          </div>
-          <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-600">
+        <fieldset disabled={loading}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label
+                htmlFor="person_id"
+                className="block text-sm text-gray-600 mb-1"
+              >
+                Person *
+              </label>
+              <select
+                id="person_id"
+                name="person_id"
+                required
+                defaultValue={defaultPersonId || ""}
+                onChange={(e) => {
+                  setSelectedPersonId(e.target.value);
+                  setShowPersonInfo(false);
+                  setPersonUpdateMsg(null);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="">Select person...</option>
+                {people.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="checkup_date"
+                className="block text-sm text-gray-600 mb-1"
+              >
+                Date *
+              </label>
               <input
-                type="checkbox"
-                name="follow_up_needed"
-                checked={followUp}
-                onChange={(e) => setFollowUp(e.target.checked)}
-                className="rounded border-gray-300"
+                id="checkup_date"
+                name="checkup_date"
+                type="date"
+                required
+                defaultValue={new Date().toISOString().split("T")[0]}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               />
-              Follow-up needed
-            </label>
-            {followUp && (
-              <div>
-                <label
-                  htmlFor="next_follow_up_date"
-                  className="block text-sm text-gray-600 mb-1"
-                >
-                  Next Follow-up Date
-                </label>
+            </div>
+            <div>
+              <label
+                htmlFor="method"
+                className="block text-sm text-gray-600 mb-1"
+              >
+                Method *
+              </label>
+              <select
+                id="method"
+                name="method"
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="call">Call</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="visit">Visit</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="comment"
+                className="block text-sm text-gray-600 mb-1"
+              >
+                Comment
+              </label>
+              <input
+                id="comment"
+                name="comment"
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input
-                  id="next_follow_up_date"
-                  name="next_follow_up_date"
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  type="checkbox"
+                  name="follow_up_needed"
+                  checked={followUp}
+                  onChange={(e) => setFollowUp(e.target.checked)}
+                  className="rounded border-gray-300"
                 />
-              </div>
-            )}
+                Follow-up needed
+              </label>
+              {followUp && (
+                <div>
+                  <label
+                    htmlFor="next_follow_up_date"
+                    className="block text-sm text-gray-600 mb-1"
+                  >
+                    Next Follow-up Date
+                  </label>
+                  <input
+                    id="next_follow_up_date"
+                    name="next_follow_up_date"
+                    type="date"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </fieldset>
         <button
           type="submit"
           disabled={loading}
