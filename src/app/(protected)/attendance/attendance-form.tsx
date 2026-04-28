@@ -68,60 +68,60 @@ export default function AttendanceForm({ people, defaultPersonId }: Props) {
       {error && (
         <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
       )}
+      <div ref={wrapperRef} className="relative">
+        <label
+          htmlFor="person_search"
+          className="block text-sm text-gray-600 mb-1"
+        >
+          Person *
+        </label>
+        <input type="hidden" name="person_id" value={selectedId} />
+        <input
+          id="person_search"
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setSelectedId("");
+            setShowDropdown(true);
+          }}
+          onFocus={() => setShowDropdown(true)}
+          autoComplete="off"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        />
+        {showDropdown && (
+          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+            {filtered.length > 0 ? (
+              filtered.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedId(p.id);
+                    setSearch(p.full_name);
+                    setShowDropdown(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50"
+                >
+                  {p.full_name}
+                </button>
+              ))
+            ) : (
+              <div className="p-3 text-center">
+                <p className="text-sm text-gray-500 mb-2">No match found</p>
+                <a
+                  href="/people/new"
+                  className="inline-block px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                >
+                  + Add New Member
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div ref={wrapperRef} className="relative">
-          <label
-            htmlFor="person_search"
-            className="block text-sm text-gray-600 mb-1"
-          >
-            Person *
-          </label>
-          <input type="hidden" name="person_id" value={selectedId} />
-          <input
-            id="person_search"
-            type="text"
-            placeholder="Search by name..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setSelectedId("");
-              setShowDropdown(true);
-            }}
-            onFocus={() => setShowDropdown(true)}
-            autoComplete="off"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-          />
-          {showDropdown && (
-            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-              {filtered.length > 0 ? (
-                filtered.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(p.id);
-                      setSearch(p.full_name);
-                      setShowDropdown(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50"
-                  >
-                    {p.full_name}
-                  </button>
-                ))
-              ) : (
-                <div className="p-3 text-center">
-                  <p className="text-sm text-gray-500 mb-2">No match found</p>
-                  <a
-                    href="/people/new"
-                    className="inline-block px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-                  >
-                    + Add New Member
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
         <div>
           <label
             htmlFor="event_date"
