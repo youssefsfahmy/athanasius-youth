@@ -8,6 +8,11 @@ import { useState } from "react";
 
 type ServantOption = { id: string; full_name: string };
 
+const SERVER_ACTION_UPLOAD_LIMIT_BYTES = 1024 * 1024;
+const TARGET_IMAGE_SIZE_BYTES = 900 * 1024;
+const MAX_IMAGE_DIMENSIONS = [1600, 1280, 960];
+const JPEG_QUALITIES = [0.82, 0.72, 0.62, 0.52, 0.42];
+
 type Props = {
   person?: Person;
   action: (formData: FormData) => Promise<{ error: string } | void>;
@@ -94,16 +99,145 @@ export default function PersonForm({
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [compressingImage, setCompressingImage] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imageMessage, setImageMessage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState(person?.image_url ?? "");
 
   async function handleSubmit(formData: FormData) {
     setError(null);
     setLoading(true);
+
+    if (selectedImageFile) {
+      formData.set("image_file", selectedImageFile);
+    }
+
     const result = await action(formData);
     if (result?.error) {
       setError(result.error);
     }
     setLoading(false);
+  }
+
+  async function loadImage(file: File) {
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Could not read image."));
+        img.src = objectUrl;
+      });
+
+      return image;
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  async function canvasToFile(
+    canvas: HTMLCanvasElement,
+    fileName: string,
+    quality: number,
+  ) {
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", quality);
+    });
+
+    if (!blob) {
+      throw new Error("Could not compress image.");
+    }
+
+    return new File([blob], fileName, {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+  }
+
+  async function compressImage(file: File) {
+    if (file.type === "image/gif") {
+      return file;
+    }
+
+    if (file.size <= TARGET_IMAGE_SIZE_BYTES) {
+      return file;
+    }
+
+    const image = await loadImage(file);
+    const fileName = file.name.replace(/\.[^.]+$/, "") || "person-photo";
+
+    for (const maxDimension of MAX_IMAGE_DIMENSIONS) {
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(image.width, image.height),
+      );
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        throw new Error("Could not prepare image compression.");
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      for (const quality of JPEG_QUALITIES) {
+        const compressedFile = await canvasToFile(
+          canvas,
+          `${fileName}.jpg`,
+          quality,
+        );
+
+        if (compressedFile.size <= TARGET_IMAGE_SIZE_BYTES) {
+          return compressedFile;
+        }
+      }
+    }
+
+    throw new Error("Image is still too large after compression.");
+  }
+
+  async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    setImageMessage(null);
+
+    if (!file) {
+      setSelectedImageFile(null);
+      setImagePreview(person?.image_url ?? "");
+      return;
+    }
+
+    setCompressingImage(true);
+
+    try {
+      const compressedFile = await compressImage(file);
+      setSelectedImageFile(compressedFile);
+      setImagePreview(URL.createObjectURL(compressedFile));
+
+      if (compressedFile !== file) {
+        setImageMessage(
+          `Compressed before upload: ${Math.round(file.size / 1024)} KB to ${Math.round(compressedFile.size / 1024)} KB.`,
+        );
+      } else {
+        setImageMessage(
+          `Ready to upload: ${Math.round(compressedFile.size / 1024)} KB.`,
+        );
+      }
+    } catch (imageError) {
+      setSelectedImageFile(null);
+      setImagePreview(person?.image_url ?? "");
+      setError(
+        imageError instanceof Error
+          ? imageError.message
+          : "Could not process image.",
+      );
+      event.target.value = "";
+    } finally {
+      setCompressingImage(false);
+    }
   }
 
   function getDefault(name: string): string {
@@ -149,14 +283,8 @@ export default function PersonForm({
               name="image_file"
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) {
-                  setImagePreview(person?.image_url ?? "");
-                  return;
-                }
-                setImagePreview(URL.createObjectURL(file));
-              }}
+              capture="environment"
+              onChange={handleImageChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <input
@@ -172,6 +300,8 @@ export default function PersonForm({
                   value="true"
                   onChange={(event) => {
                     if (event.target.checked) {
+                      setSelectedImageFile(null);
+                      setImageMessage(null);
                       setImagePreview("");
                       return;
                     }
@@ -183,8 +313,20 @@ export default function PersonForm({
               </label>
             )}
             <p className="mt-2 text-xs text-gray-500">
-              Upload a JPG, PNG, WebP, or GIF up to 5 MB.
+              Camera photos are compressed before upload to stay under the
+              server request limit.
             </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Use JPG, PNG, WebP, or GIF. Files must end up under{" "}
+              {Math.round(SERVER_ACTION_UPLOAD_LIMIT_BYTES / 1024)} KB before
+              sending.
+            </p>
+            {compressingImage && (
+              <p className="mt-2 text-xs text-blue-600">Compressing image...</p>
+            )}
+            {imageMessage && (
+              <p className="mt-2 text-xs text-green-600">{imageMessage}</p>
+            )}
           </div>
         </div>
       </fieldset>
@@ -263,10 +405,14 @@ export default function PersonForm({
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || compressingImage}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "Saving..." : submitLabel}
+          {loading
+            ? "Saving..."
+            : compressingImage
+              ? "Compressing..."
+              : submitLabel}
         </button>
         <Link
           href="/people"
