@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export default async function Navigation() {
   const supabase = await createClient();
@@ -16,13 +17,13 @@ export default async function Navigation() {
     .maybeSingle();
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-white border-b border-gray-200 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 items-center">
           <div className="flex items-center space-x-6">
-            <a href="/dashboard" className="font-bold text-lg text-gray-900">
+            <Link href="/dashboard" className="font-bold text-lg text-gray-900">
               Athanasius
-            </a>
+            </Link>
             <div className="hidden sm:flex space-x-4">
               <NavLink href="/dashboard">Dashboard</NavLink>
               <NavLink href="/people">People</NavLink>
@@ -31,12 +32,12 @@ export default async function Navigation() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <a
+            <Link
               href="/profile"
               className="text-sm text-gray-600 hover:text-gray-900"
             >
               {profile?.full_name || user.email}
-            </a>
+            </Link>
             <form action="/auth/logout" method="POST">
               <button
                 type="submit"
@@ -67,11 +68,11 @@ function NavLink({
   children: React.ReactNode;
 }) {
   return (
-    <a
+    <Link
       href={href}
       className="text-sm text-gray-600 hover:text-gray-900 whitespace-nowrap"
     >
       {children}
-    </a>
+    </Link>
   );
 }

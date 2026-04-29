@@ -4,6 +4,7 @@ import { requireProfile } from "@/lib/require-profile";
 import PersonForm from "@/components/person-form";
 import { updatePerson } from "../../actions";
 import type { Person } from "@/lib/types";
+import Link from "next/link";
 
 export default async function EditPersonPage({
   params,
@@ -34,12 +35,12 @@ export default async function EditPersonPage({
 
   return (
     <div>
-      <a
+      <Link
         href={`/people/${id}`}
         className="text-sm text-gray-500 hover:text-gray-700"
       >
         ← Back to Profile
-      </a>
+      </Link>
       <h1 className="text-2xl font-bold text-gray-900 mt-1 mb-6">
         Edit: {(person as Person).full_name}
       </h1>

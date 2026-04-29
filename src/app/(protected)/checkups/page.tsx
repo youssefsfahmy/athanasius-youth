@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/require-profile";
 import type { CheckupWithDetails, Person } from "@/lib/types";
 import CheckupForm from "./checkup-form";
+import Link from "next/link";
 
 export default async function CheckupsPage({
   searchParams,
@@ -110,12 +111,12 @@ export default async function CheckupsPage({
           Filter
         </button>
         {(person_id || method || follow_up) && (
-          <a
+          <Link
             href="/checkups"
             className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200"
           >
             Clear
-          </a>
+          </Link>
         )}
       </form>
 
@@ -149,12 +150,12 @@ export default async function CheckupsPage({
               <tr key={r.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-gray-900">{r.checkup_date}</td>
                 <td className="px-4 py-3">
-                  <a
+                  <Link
                     href={`/people/${r.person_id}`}
                     className="text-blue-600 hover:underline"
                   >
                     {r.people?.full_name || "—"}
-                  </a>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{r.method}</td>
                 <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">

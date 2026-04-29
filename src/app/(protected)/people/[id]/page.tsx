@@ -7,6 +7,7 @@ import type {
   CheckupWithDetails,
 } from "@/lib/types";
 import PersonActions from "./person-actions";
+import Link from "next/link";
 
 function getPhoneHref(phoneNumber: string) {
   return `tel:${phoneNumber.replace(/[^\d+]/g, "")}`;
@@ -135,12 +136,12 @@ export default async function PersonProfilePage({
             </div>
           )}
           <div>
-            <a
+            <Link
               href="/people"
               className="text-sm text-gray-500 hover:text-gray-700"
             >
               ← Back to People
-            </a>
+            </Link>
             <h1 className="text-2xl font-bold text-gray-900 mt-1">
               {p.full_name}
             </h1>
@@ -170,12 +171,12 @@ export default async function PersonProfilePage({
                       <dt className="text-xs text-gray-500">{item.label}</dt>
                       <dd className="text-sm text-gray-900 mt-0.5">
                         {item.isPhone && item.value ? (
-                          <a
+                          <Link
                             href={getPhoneHref(item.value)}
                             className="text-blue-600 hover:underline"
                           >
                             {item.value}
-                          </a>
+                          </Link>
                         ) : (
                           item.value
                         )}
@@ -194,12 +195,12 @@ export default async function PersonProfilePage({
           <h2 className="text-lg font-semibold text-gray-900">
             Attendance History
           </h2>
-          <a
+          <Link
             href={`/attendance?person_id=${id}`}
             className="text-sm text-blue-600 hover:underline"
           >
             Add Attendance
-          </a>
+          </Link>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
@@ -261,12 +262,12 @@ export default async function PersonProfilePage({
           <h2 className="text-lg font-semibold text-gray-900">
             Checkup History
           </h2>
-          <a
+          <Link
             href={`/checkups?person_id=${id}`}
             className="text-sm text-blue-600 hover:underline"
           >
             Add Checkup
-          </a>
+          </Link>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">

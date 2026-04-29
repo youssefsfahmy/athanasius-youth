@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { deletePerson } from "../actions";
 import LoadingOverlay from "@/components/loading-overlay";
+import Link from "next/link";
 
 export default function PersonActions({ personId }: { personId: string }) {
   const [confirming, setConfirming] = useState(false);
@@ -21,12 +22,12 @@ export default function PersonActions({ personId }: { personId: string }) {
     <>
       {deleting && <LoadingOverlay message="Deleting person..." />}
       <div className="flex gap-2">
-        <a
+        <Link
           href={`/people/${personId}/edit`}
           className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200"
         >
           Edit
-        </a>
+        </Link>
         {confirming ? (
           <div className="flex gap-1">
             <button

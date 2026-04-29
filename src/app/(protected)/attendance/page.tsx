@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/require-profile";
 import type { AttendanceWithDetails } from "@/lib/types";
 import AttendanceForm from "./attendance-form";
+import Link from "next/link";
 
 export default async function AttendancePage({
   searchParams,
@@ -87,12 +88,12 @@ export default async function AttendancePage({
           Filter
         </button>
         {(person_id || event_name || date) && (
-          <a
+          <Link
             href="/attendance"
             className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200"
           >
             Clear
-          </a>
+          </Link>
         )}
       </form>
 
@@ -126,12 +127,12 @@ export default async function AttendancePage({
               <tr key={r.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-gray-900">{r.event_date}</td>
                 <td className="px-4 py-3">
-                  <a
+                  <Link
                     href={`/people/${r.person_id}`}
                     className="text-blue-600 hover:underline"
                   >
                     {r.people?.full_name || "—"}
-                  </a>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
                   {r.event_name}
