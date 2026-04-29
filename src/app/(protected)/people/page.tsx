@@ -292,20 +292,20 @@ export default async function PeoplePage({
       )}
 
       {/* People Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-x-scroll">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-700">
                 Name
               </th>
-              <th className="text-left px-4 py-3 font-medium text-gray-700 hidden sm:table-cell">
+              <th className="text-left px-4 py-3 font-medium text-gray-700  sm:table-cell">
                 Phone
               </th>
-              <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">
+              <th className="text-left px-4 py-3 font-medium text-gray-700  md:table-cell">
                 Family
               </th>
-              <th className="text-left px-4 py-3 font-medium text-gray-700 hidden md:table-cell">
+              <th className="text-left px-4 py-3 font-medium text-gray-700  md:table-cell">
                 Gender
               </th>
             </tr>
@@ -331,7 +331,7 @@ export default async function PeoplePage({
                     {person.full_name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
+                <td className="px-4 py-3 text-gray-600  sm:table-cell">
                   {person.phone_primary ? (
                     <Link
                       href={getPhoneHref(person.phone_primary)}
@@ -343,10 +343,10 @@ export default async function PeoplePage({
                     "—"
                   )}
                 </td>
-                <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
+                <td className="px-4 py-3 text-gray-600  md:table-cell">
                   {person.church_family_group || "—"}
                 </td>
-                <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
+                <td className="px-4 py-3 text-gray-600  md:table-cell">
                   {person.gender || "—"}
                 </td>
               </tr>
