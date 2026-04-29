@@ -21,6 +21,8 @@ type Props = {
   action: (formData: FormData) => Promise<{ error: string } | void>;
   submitLabel: string;
   servants?: ServantOption[];
+  showCancel?: boolean;
+  cancelHref?: string;
 };
 
 const FIELD_GROUPS = [
@@ -99,6 +101,8 @@ export default function PersonForm({
   action,
   submitLabel,
   servants,
+  showCancel = true,
+  cancelHref = "/people",
 }: Props) {
   const formTopRef = useRef<HTMLDivElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -160,7 +164,10 @@ export default function PersonForm({
       if (result?.error) {
         showError(result.error);
         setLoading(false);
+        return;
       }
+
+      setLoading(false);
     } catch {
       // redirect() throws — keep loading visible during navigation
     }
@@ -291,6 +298,18 @@ export default function PersonForm({
   function getDefault(name: string): string {
     if (!person) return "";
     return ((person as Record<string, unknown>)[name] as string) ?? "";
+  }
+
+  function isFieldMissing(name: string): boolean {
+    if (!person) return false;
+    return getDefault(name).trim() === "";
+  }
+
+  function getFieldClasses(name: string): string {
+    const hasValue = !isFieldMissing(name);
+    return `w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+      hasValue ? "border-gray-300" : "border-orange-300 bg-orange-50"
+    }`;
   }
 
   return (
@@ -430,12 +449,17 @@ export default function PersonForm({
                   <div key={field.name}>
                     <label
                       htmlFor={field.name}
-                      className="block text-sm text-gray-600 mb-1"
+                      className={`block text-sm mb-1 ${
+                        isFieldMissing(field.name)
+                          ? "text-orange-600 font-medium"
+                          : "text-gray-600"
+                      }`}
                     >
                       {field.label}
                       {field.required && (
                         <span className="text-red-500"> *</span>
                       )}
+                      {isFieldMissing(field.name) && " (missing)"}
                     </label>
                     {field.type === "textarea" ? (
                       <textarea
@@ -443,14 +467,14 @@ export default function PersonForm({
                         name={field.name}
                         defaultValue={getDefault(field.name)}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={getFieldClasses(field.name)}
                       />
                     ) : field.type === "select" ? (
                       <select
                         id={field.name}
                         name={field.name}
                         defaultValue={getDefault(field.name)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={getFieldClasses(field.name)}
                       >
                         {field.options?.map((opt) => (
                           <option key={opt} value={opt}>
@@ -465,7 +489,7 @@ export default function PersonForm({
                         id={field.name}
                         name={field.name}
                         defaultValue={getDefault(field.name)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={getFieldClasses(field.name)}
                       >
                         <option value="">Select servant...</option>
                         {(servants || []).map((s) => (
@@ -491,7 +515,7 @@ export default function PersonForm({
                             ? "Arabic letters only"
                             : undefined
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={getFieldClasses(field.name)}
                       />
                     )}
                   </div>
@@ -512,12 +536,14 @@ export default function PersonForm({
                   ? "Compressing..."
                   : submitLabel}
             </button>
-            <Link
-              href="/people"
-              className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200"
-            >
-              Cancel
-            </Link>
+            {showCancel && (
+              <Link
+                href={cancelHref}
+                className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200"
+              >
+                Cancel
+              </Link>
+            )}
           </div>
         </fieldset>
       </form>

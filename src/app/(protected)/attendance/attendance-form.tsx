@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createAttendance } from "./actions";
 import LoadingOverlay from "@/components/loading-overlay";
+import Link from "next/link";
 
 type Props = {
   people: { id: string; full_name: string }[];
@@ -118,12 +119,12 @@ export default function AttendanceForm({ people, defaultPersonId }: Props) {
                 ) : (
                   <div className="p-3 text-center">
                     <p className="text-sm text-gray-500 mb-2">No match found</p>
-                    <a
+                    <Link
                       href="/people/new"
                       className="inline-block px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                     >
                       + Add New Member
-                    </a>
+                    </Link>
                   </div>
                 )}
               </div>

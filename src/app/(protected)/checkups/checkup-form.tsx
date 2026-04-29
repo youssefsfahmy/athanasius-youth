@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createCheckup, updatePersonInfo } from "./actions";
 import LoadingOverlay from "@/components/loading-overlay";
+import Link from "next/link";
+import PersonForm from "@/components/person-form";
 import type { Person } from "@/lib/types";
 
 type ServantOption = { id: string; full_name: string };
@@ -14,33 +16,6 @@ type Props = {
   defaultPersonId?: string;
 };
 
-const PERSON_FIELDS = [
-  { name: "phone_primary", label: "Primary Phone", type: "tel" },
-  { name: "phone_secondary", label: "Secondary Phone", type: "tel" },
-  { name: "phone_landline", label: "Landline", type: "tel" },
-  { name: "phone_father", label: "Father's Phone", type: "tel" },
-  { name: "phone_mother", label: "Mother's Phone", type: "tel" },
-  { name: "address_area", label: "Area", type: "text" },
-  { name: "address_street", label: "Street", type: "text" },
-  { name: "address_building", label: "Building", type: "text" },
-  { name: "address_floor", label: "Floor", type: "text" },
-  { name: "address_apartment", label: "Apartment", type: "text" },
-  { name: "address_details", label: "Address Details", type: "text" },
-  { name: "address_landmark", label: "Landmark", type: "text" },
-  { name: "education_college", label: "College", type: "text" },
-  { name: "education_university", label: "University", type: "text" },
-  { name: "education_year", label: "Year", type: "text" },
-  {
-    name: "church_confession_father",
-    label: "Confession Father",
-    type: "text",
-  },
-  { name: "church_family_group", label: "Family Group", type: "text" },
-  { name: "church_family_servant", label: "Family Servant", type: "text" },
-  { name: "social_facebook_url", label: "Facebook URL", type: "url" },
-  { name: "notes_public", label: "Public Notes", type: "text" },
-];
-
 export default function CheckupForm({
   people,
   peopleDetails,
@@ -50,12 +25,38 @@ export default function CheckupForm({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [followUp, setFollowUp] = useState(false);
+  const [search, setSearch] = useState(() => {
+    if (defaultPersonId) {
+      const found = people.find((p) => p.id === defaultPersonId);
+      return found?.full_name || "";
+    }
+    return "";
+  });
   const [selectedPersonId, setSelectedPersonId] = useState(
     defaultPersonId || "",
   );
+  const [showDropdown, setShowDropdown] = useState(false);
+  const personSearchRef = useRef<HTMLDivElement>(null);
+
+  const filteredPeople = search
+    ? people.filter((p) =>
+        p.full_name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : people;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        personSearchRef.current &&
+        !personSearchRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [showPersonInfo, setShowPersonInfo] = useState(false);
-  const [personUpdateMsg, setPersonUpdateMsg] = useState<string | null>(null);
-  const [updatingPerson, setUpdatingPerson] = useState(false);
 
   const selectedPerson = selectedPersonId
     ? peopleDetails[selectedPersonId]
@@ -77,15 +78,12 @@ export default function CheckupForm({
 
   async function handleUpdatePerson(formData: FormData) {
     if (!selectedPersonId) return;
-    setPersonUpdateMsg(null);
-    setUpdatingPerson(true);
     const result = await updatePersonInfo(selectedPersonId, formData);
     if (result?.error) {
-      setPersonUpdateMsg(result.error);
-    } else {
-      setPersonUpdateMsg("Person info updated!");
+      return { error: result.error };
     }
-    setUpdatingPerson(false);
+
+    return;
   }
 
   return (
@@ -97,32 +95,65 @@ export default function CheckupForm({
         )}
         <fieldset disabled={loading}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
+            <div
+              ref={personSearchRef}
+              className="relative sm:col-span-2 lg:col-span-3"
+            >
               <label
-                htmlFor="person_id"
+                htmlFor="person_search"
                 className="block text-sm text-gray-600 mb-1"
               >
                 Person *
               </label>
-              <select
-                id="person_id"
-                name="person_id"
-                required
-                defaultValue={defaultPersonId || ""}
+              <input type="hidden" name="person_id" value={selectedPersonId} />
+              <input
+                id="person_search"
+                type="text"
+                placeholder="Search by name..."
+                value={search}
                 onChange={(e) => {
-                  setSelectedPersonId(e.target.value);
+                  setSearch(e.target.value);
+                  setSelectedPersonId("");
                   setShowPersonInfo(false);
-                  setPersonUpdateMsg(null);
+                  setShowDropdown(true);
                 }}
+                onFocus={() => setShowDropdown(true)}
+                autoComplete="off"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="">Select person...</option>
-                {people.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name}
-                  </option>
-                ))}
-              </select>
+              />
+              {showDropdown && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {filteredPeople.length > 0 ? (
+                    filteredPeople.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPersonId(p.id);
+                          setSearch(p.full_name);
+                          setShowDropdown(false);
+                          setShowPersonInfo(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50"
+                      >
+                        {p.full_name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-3 text-center">
+                      <p className="text-sm text-gray-500 mb-2">
+                        No match found
+                      </p>
+                      <Link
+                        href="/people/new"
+                        className="inline-block px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                      >
+                        + Add New Member
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label
@@ -237,91 +268,15 @@ export default function CheckupForm({
           </button>
 
           {showPersonInfo && (
-            <form action={handleUpdatePerson} className="p-4 pt-0 space-y-4">
-              {personUpdateMsg && (
-                <p
-                  className={`text-sm p-2 rounded ${
-                    personUpdateMsg.includes("updated")
-                      ? "text-green-700 bg-green-50"
-                      : "text-red-600 bg-red-50"
-                  }`}
-                >
-                  {personUpdateMsg}
-                </p>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {PERSON_FIELDS.map((field) => {
-                  const value = (selectedPerson as Record<string, unknown>)[
-                    field.name
-                  ] as string | null;
-                  return (
-                    <div key={field.name}>
-                      <label
-                        htmlFor={`person_${field.name}`}
-                        className={`block text-xs mb-1 ${
-                          value
-                            ? "text-gray-500"
-                            : "text-orange-600 font-medium"
-                        }`}
-                      >
-                        {field.label}
-                        {!value && " (missing)"}
-                      </label>
-                      <input
-                        id={`person_${field.name}`}
-                        name={field.name}
-                        type={field.type}
-                        defaultValue={value || ""}
-                        className={`w-full px-2 py-1.5 border rounded-md text-sm ${
-                          value
-                            ? "border-gray-200"
-                            : "border-orange-200 bg-orange-50"
-                        }`}
-                      />
-                    </div>
-                  );
-                })}
-                <div>
-                  <label
-                    htmlFor="person_church_checkup_servant_id"
-                    className={`block text-xs mb-1 ${
-                      selectedPerson.church_checkup_servant_id
-                        ? "text-gray-500"
-                        : "text-orange-600 font-medium"
-                    }`}
-                  >
-                    Checkup Servant
-                    {!selectedPerson.church_checkup_servant_id && " (missing)"}
-                  </label>
-                  <select
-                    id="person_church_checkup_servant_id"
-                    name="church_checkup_servant_id"
-                    defaultValue={
-                      selectedPerson.church_checkup_servant_id || ""
-                    }
-                    className={`w-full px-2 py-1.5 border rounded-md text-sm ${
-                      selectedPerson.church_checkup_servant_id
-                        ? "border-gray-200"
-                        : "border-orange-200 bg-orange-50"
-                    }`}
-                  >
-                    <option value="">Select servant...</option>
-                    {servants.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={updatingPerson}
-                className="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-900 disabled:opacity-50"
-              >
-                {updatingPerson ? "Updating..." : "Update Person Info"}
-              </button>
-            </form>
+            <div className="p-4 pt-0">
+              <PersonForm
+                person={selectedPerson}
+                action={handleUpdatePerson}
+                submitLabel="Update Person Info"
+                servants={servants}
+                showCancel={false}
+              />
+            </div>
           )}
         </div>
       )}
