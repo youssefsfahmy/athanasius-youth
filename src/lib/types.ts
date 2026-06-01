@@ -34,6 +34,7 @@ export type Person = {
   church_checkup_servant_id: string | null;
   church_last_checkup_date: string | null;
   social_facebook_url: string | null;
+  google_maps_link: string | null;
   notes_public: string | null;
   notes_private: string | null;
   image_url: string | null;

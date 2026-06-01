@@ -90,6 +90,7 @@ const FIELD_GROUPS = [
     title: "Other",
     fields: [
       { name: "social_facebook_url", label: "Facebook URL", type: "url" },
+      { name: "google_maps_link", label: "Google Maps Link", type: "url" },
       { name: "notes_public", label: "Public Notes", type: "textarea" },
       { name: "notes_private", label: "Private Notes", type: "textarea" },
     ],

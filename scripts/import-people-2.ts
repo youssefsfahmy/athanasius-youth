@@ -22,53 +22,44 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-const EXCEL_PATH = path.resolve(__dirname, "../imports/people.xlsx");
+const EXCEL_PATH = path.resolve(__dirname, "../imports/people-2.xlsx");
 
 type ExcelRow = Record<string, string | number | null>;
 
 const COLUMN_MAP: Record<string, string> = {
-  "Full Name": "full_name",
-  Landline: "phone_landline",
-  "MOB 1": "phone_primary",
-  "MOB 2": "phone_secondary",
-  "Father MOB": "phone_father",
-  "Mother MOB": "phone_mother",
-  "Male/Female": "gender",
-  المنطقه: "address_area",
-  عماره: "address_building",
+  الاسم: "full_name",
+  أرضي: "phone_landline",
+  مخدوم: "phone_primary",
+  الأب: "phone_father",
+  الأم: "phone_mother",
+  عمارة: "address_building",
   الشارع: "address_street",
-  العنوان: "address_details",
+  المنطقة: "address_area",
   الدور: "address_floor",
   الشقة: "address_apartment",
-  "وصف لمكان البيت": "address_landmark",
-  كلية: "education_college",
-  جامعة: "education_university",
-  "Edu. Year": "education_year",
-  "أب الاعتراف": "church_confession_father",
-  "Family 24/25": "church_family_group",
-  "خادم الFamily 24/25": "church_family_servant",
-  "امتي اخر افتقاد للشاب": "church_last_checkup_date",
-  "Facebook Account": "social_facebook_url",
-  Notes: "notes_public",
-  "Notes Can't Print": "notes_private",
-  image: "image_url",
+  "أقرب مكان": "address_landmark",
+  Location: "google_maps_link",
+  "أب\n الاعتراف": "church_confession_father",
+  "كاهن\n الأسرة": "church_family_servant",
+  الكلية: "education_college",
+  "ملاحظات - اعدادي": "notes_public",
+  "ملاحظات - ثانوي": "notes_private",
 };
 
 const PHONE_FIELDS = [
   "phone_primary",
   "phone_secondary",
-  "phone_landline",
   "phone_father",
   "phone_mother",
 ];
 
 function cleanPhone(value: string | number | null): string | null {
   if (value == null) return null;
-  return (
-    String(value)
-      .replace(/[\r\n]+/g, ", ")
-      .trim() || null
-  );
+  const cleaned = String(value)
+    .replace(/[\r\n]+/g, ", ")
+    .trim();
+  if (!cleaned) return null;
+  return cleaned.startsWith("0") ? cleaned : `0${cleaned}`;
 }
 
 function buildBirthDate(row: ExcelRow): string | null {
@@ -76,7 +67,9 @@ function buildBirthDate(row: ExcelRow): string | null {
   const m = row["M"];
   const d = row["D"];
   if (!y) return null;
-  const year = String(y).padStart(4, "0");
+  const yearNum = parseInt(String(y), 10);
+  const year =
+    yearNum < 1000 ? `2${String(yearNum).padStart(3, "0")}` : String(yearNum);
   const month = String(m || 1).padStart(2, "0");
   const day = String(d || 1).padStart(2, "0");
   return `${year}-${month}-${day}`;
@@ -101,6 +94,13 @@ function mapRow(row: ExcelRow): Record<string, string | null> {
   }
 
   record.birth_date = buildBirthDate(row);
+  record.church_family_group = "1";
+  record.education_year = "1";
+  record.church_family_servant = null;
+  record.gender = "F";
+  if (record.full_name) {
+    record.full_name = record.full_name.replace(/✅/g, "").trim();
+  }
 
   return record;
 }
@@ -121,7 +121,7 @@ async function main() {
   let skipped = 0;
 
   for (const row of rows) {
-    const fullName = row["Full Name"];
+    const fullName = row["الاسم"];
     if (!fullName || String(fullName).trim() === "") {
       skipped++;
       continue;
@@ -130,7 +130,7 @@ async function main() {
   }
 
   console.log(
-    `Mapped ${records.length} records (skipped ${skipped} without Full Name)`,
+    `Mapped ${records.length} records (skipped ${skipped} without الاسم)`,
   );
 
   if (records.length === 0) {

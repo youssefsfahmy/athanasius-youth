@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 4000",
     "lint": "eslint",
-    "import:people": "tsx scripts/import-people.ts"
+    "import:people": "tsx scripts/import-people.ts",
+    "import:people-2": "tsx scripts/import-people-2.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",

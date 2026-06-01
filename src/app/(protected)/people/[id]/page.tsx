@@ -17,6 +17,7 @@ type DetailItem = {
   label: string;
   value: string | null;
   isPhone?: boolean;
+  isLink?: boolean;
 };
 
 export default async function PersonProfilePage({
@@ -113,7 +114,8 @@ export default async function PersonProfilePage({
     {
       title: "Other",
       items: [
-        { label: "Facebook", value: p.social_facebook_url },
+        { label: "Facebook", value: p.social_facebook_url, isLink: true },
+        { label: "Google Maps", value: p.google_maps_link, isLink: true },
         { label: "Public Notes", value: p.notes_public },
         { label: "Private Notes", value: p.notes_private },
       ],
@@ -177,6 +179,15 @@ export default async function PersonProfilePage({
                           >
                             {item.value}
                           </Link>
+                        ) : item.isLink && item.value ? (
+                          <a
+                            href={item.value}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline break-all"
+                          >
+                            {item.value}
+                          </a>
                         ) : (
                           item.value
                         )}
